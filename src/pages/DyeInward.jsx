@@ -61,8 +61,7 @@ const DyeInward = () => {
     if (field === 'quality') {
       const selectedQuality = greyQualities.find(q => q.display === value);
       if (selectedQuality) {
-        updatedEntries[index]['challan'] = selectedQuality.challan;
-        updatedEntries[index]['grey_purchase_from'] = selectedQuality.grey_purchase_from; // Add this line
+        updatedEntries[index]['challan'] = selectedQuality.challan; // Set challan value separately
       }
     }
   
@@ -89,11 +88,9 @@ const DyeInward = () => {
   };
   
   const handleSubmit = async () => {
-    // Get the selected dye party from the form
     const dyePartySelect = document.getElementById('dyePartySelect');
     const dye_from = dyePartySelect.value;
   
-    // Prepare the grey details array from entries
     const grey_details = entries.map(entry => ({
       grey_quality: entry.quality,
       grey_challan: entry.challan,
@@ -105,7 +102,6 @@ const DyeInward = () => {
       grey_amt: parseInt(entry.amt, 10) || 0,
     }));
   
-    // Validate the dye party selection and entries
     if (!dye_from) {
       setError('Please select a dye party.');
       return;
@@ -128,8 +124,7 @@ const DyeInward = () => {
   
       if (response.ok) {
         setAlert('Dye inward entry created successfully!');
-        // Optionally, reset the form or clear the entries
-        setEntries([]); // Clear entries after successful submission
+        setEntries([]);
       } else {
         setError(data.msg || 'Failed to create dye inward entry.');
       }

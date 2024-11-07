@@ -20,9 +20,22 @@ const CustomNavbar = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mx-auto">
             <Nav.Link as={NavLink} to="/" exact disabled={!isLoggedIn}>Home</Nav.Link>
-            <Nav.Link as={NavLink} to="/party-details" disabled={!isLoggedIn}>Party Details</Nav.Link>
+            <Dropdown>
+              <Dropdown.Toggle variant="light" id="dropdown-administrator" disabled={!isLoggedIn}>
+                Administrator
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item as={NavLink} to="/party-details" disabled={!isLoggedIn}>
+                  Party Details
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/quality" disabled={!isLoggedIn}>
+                  Quality
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
             <Nav.Link as={NavLink} to="/grey-purchase" disabled={!isLoggedIn}>Grey Purchase</Nav.Link>
             <Nav.Link as={NavLink} to="/dye-inward" disabled={!isLoggedIn}>Dye Inward</Nav.Link>
+            
             {/* Reports dropdown */}
             <Dropdown>
               <Dropdown.Toggle variant="light" id="dropdown-reports" disabled={!isLoggedIn}>
@@ -37,6 +50,12 @@ const CustomNavbar = () => {
                 </Dropdown.Item>
                 <Dropdown.Item as={NavLink} to="/grey-stock" disabled={!isLoggedIn}>
                   Grey Stock
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/tejas-stock" disabled={!isLoggedIn}>
+                  Tejas Stock
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/pending-stock" disabled={!isLoggedIn}>
+                  Pending Stock
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>

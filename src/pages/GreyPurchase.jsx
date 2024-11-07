@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Row, Col, Alert } from 'react-bootstrap';
-import { useAuth } from '../store/AuthContext'; // Adjust the import path according to your structure
+import { useAuth } from '../store/AuthContext';
 
 const GreyPurchase = () => {
-  const { isLoggedIn } = useAuth(); // Access the authentication status
+  const { isLoggedIn } = useAuth(); // Check authentication
   const [purchasedFrom, setPurchasedFrom] = useState('');
   const [dateOfPurchase, setDateOfPurchase] = useState('');
   const [challanNo, setChallanNo] = useState('');
@@ -16,6 +16,7 @@ const GreyPurchase = () => {
   const [sentTo, setSentTo] = useState('');
   const [partyList, setPartyList] = useState([]);
   const [sentToList, setSentToList] = useState([]);
+  const [purchaseQualities, setPurchaseQualities] = useState([]); // Store fetched purchase qualities
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -30,7 +31,6 @@ const GreyPurchase = () => {
           setError(data.msg || 'Failed to fetch grey parties');
         }
       } catch (error) {
-        console.error('Error fetching grey parties:', error);
         setError('Failed to fetch grey parties. Please try again later.');
       }
     };
@@ -45,13 +45,28 @@ const GreyPurchase = () => {
           setError(data.msg || 'Failed to fetch sent to parties');
         }
       } catch (error) {
-        console.error('Error fetching sent to parties:', error);
         setError('Failed to fetch sent to parties. Please try again later.');
+      }
+    };
+
+    const fetchPurchaseQualities = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/auth/view-quality');
+        const data = await response.json();
+        if (response.ok) {
+          setPurchaseQualities(data.qualities); // Store the fetched qualities
+        } else {
+          setError(data.msg || 'Failed to fetch purchase qualities');
+        }
+      } catch (error) {
+        setError('Failed to fetch purchase qualities. Please try again later.');
       }
     };
 
     fetchParties();
     fetchSentToParties();
+    fetchPurchaseQualities(); // Fetch purchase qualities
+
   }, []);
 
   const handleSubmit = async (e) => {
@@ -79,26 +94,18 @@ const GreyPurchase = () => {
       });
 
       if (response.ok) {
-        const responseData = await response.json();
-        console.log('Grey purchase added successfully:', responseData);
         setSuccessMessage('Grey purchase recorded successfully!');
-
-        // After successful purchase, add to grey stock
-        await addGreyStock();
-        
-        // Clear the form after successful submission
-        resetForm();
+        await addGreyStock(); // Update grey stock
+        resetForm(); // Clear form
       } else {
         const errorData = await response.json();
         setError(errorData.msg || 'Failed to add grey purchase');
       }
     } catch (error) {
-      console.error('Error adding grey purchase:', error);
       setError('An error occurred while adding the grey purchase. Please try again.');
     }
   };
 
-  // Function to add grey stock
   const addGreyStock = async () => {
     const greyStockData = {
       grey_purchase_quality: purchaseQuality,
@@ -107,6 +114,8 @@ const GreyPurchase = () => {
       grey_purchase_challan: challanNo,
       grey_purchase_date: dateOfPurchase,
       grey_purchase_from: purchasedFrom,
+      grey_sent_to: sentTo, // Include sentTo field
+      status: "DYING", // Default status set to "DYING"
     };
 
     try {
@@ -151,9 +160,7 @@ const GreyPurchase = () => {
     <Container className="mt-5">
       <h2 className="text-center">Record Grey Purchase</h2>
       {!isLoggedIn ? (
-        <Alert variant="danger">
-          Please log in to access this page.
-        </Alert>
+        <Alert variant="danger">Please log in to access this page.</Alert>
       ) : (
         <>
           {successMessage && <Alert variant="success">{successMessage}</Alert>}
@@ -163,12 +170,7 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="purchasedFrom">
                   <Form.Label>Purchased From</Form.Label>
-                  <Form.Control 
-                    as="select" 
-                    value={purchasedFrom} 
-                    onChange={(e) => setPurchasedFrom(e.target.value)} 
-                    required
-                  >
+                  <Form.Control as="select" value={purchasedFrom} onChange={(e) => setPurchasedFrom(e.target.value)} required>
                     <option value="">Choose...</option>
                     {partyList.map((party, index) => (
                       <option key={index} value={party}>{party}</option>
@@ -180,12 +182,7 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="dateOfPurchase">
                   <Form.Label>Date of Purchase</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    value={dateOfPurchase} 
-                    onChange={(e) => setDateOfPurchase(e.target.value)} 
-                    required
-                  />
+                  <Form.Control type="date" value={dateOfPurchase} onChange={(e) => setDateOfPurchase(e.target.value)} required />
                 </Form.Group>
               </Col>
             </Row>
@@ -194,26 +191,14 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="challanNo">
                   <Form.Label>Challan No</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    placeholder="Enter Challan No" 
-                    value={challanNo} 
-                    onChange={(e) => setChallanNo(toUpperCase(e.target.value))} 
-                    required
-                  />
+                  <Form.Control type="text" placeholder="Enter Challan No" value={challanNo} onChange={(e) => setChallanNo(toUpperCase(e.target.value))} required />
                 </Form.Group>
               </Col>
 
               <Col md={6}>
                 <Form.Group controlId="billNo">
                   <Form.Label>Bill No</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    placeholder="Enter Bill No" 
-                    value={billNo} 
-                    onChange={(e) => setBillNo(toUpperCase(e.target.value))} 
-                    required
-                  />
+                  <Form.Control type="text" placeholder="Enter Bill No" value={billNo} onChange={(e) => setBillNo(toUpperCase(e.target.value))} required />
                 </Form.Group>
               </Col>
             </Row>
@@ -222,12 +207,7 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="partyName">
                   <Form.Label>Party Name</Form.Label>
-                  <Form.Control 
-                    as="select" 
-                    value={partyName} 
-                    onChange={(e) => setPartyName(toUpperCase(e.target.value))} 
-                    required
-                  >
+                  <Form.Control as="select" value={partyName} onChange={(e) => setPartyName(toUpperCase(e.target.value))} required>
                     <option value="">Choose...</option>
                     <option value="ASHISH FABS">ASHISH FABS</option>
                     <option value="RPRASHIL KUMAR">RPRASHIL KUMAR</option>
@@ -238,16 +218,13 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="purchaseQuality">
                   <Form.Label>Purchase Quality</Form.Label>
-                  <Form.Control 
-                    as="select" 
-                    value={purchaseQuality} 
-                    onChange={(e) => setPurchaseQuality(toUpperCase(e.target.value))} 
-                    required
-                  >
+                  <Form.Control as="select" value={purchaseQuality} onChange={(e) => setPurchaseQuality(toUpperCase(e.target.value))} required>
                     <option value="">Choose...</option>
-                    <option value="ZURICH 6%">ZURICH 6%</option>
-                    <option value="TWO WAY">TWO WAY</option>
-                    <option value="SUPER SUEDE">SUPER SUEDE</option>
+                    {purchaseQualities.map((quality, index) => (
+                      <option key={index} value={quality.quality_name}>
+                        {quality.quality_name}
+                      </option>
+                    ))}
                   </Form.Control>
                 </Form.Group>
               </Col>
@@ -257,39 +234,21 @@ const GreyPurchase = () => {
               <Col md={4}>
                 <Form.Group controlId="totalRoll">
                   <Form.Label>Total Roll</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    placeholder="Enter Total Roll" 
-                    value={totalRoll} 
-                    onChange={(e) => setTotalRoll(e.target.value)} 
-                    required
-                  />
+                  <Form.Control type="number" value={totalRoll} onChange={(e) => setTotalRoll(e.target.value)} required />
                 </Form.Group>
               </Col>
 
               <Col md={4}>
                 <Form.Group controlId="totalNetWtg">
                   <Form.Label>Total Net Wtg</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    placeholder="Enter Total Net Wtg" 
-                    value={totalNetWtg} 
-                    onChange={(e) => setTotalNetWtg(e.target.value)} 
-                    required
-                  />
+                  <Form.Control type="number" value={totalNetWtg} onChange={(e) => setTotalNetWtg(e.target.value)} required />
                 </Form.Group>
               </Col>
 
               <Col md={4}>
                 <Form.Group controlId="totalBillAmt">
-                  <Form.Label>Total Bill Amount</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    placeholder="Enter Total Bill Amount" 
-                    value={totalBillAmt} 
-                    onChange={(e) => setTotalBillAmt(e.target.value)} 
-                    required
-                  />
+                  <Form.Label>Total Bill Amt</Form.Label>
+                  <Form.Control type="number" value={totalBillAmt} onChange={(e) => setTotalBillAmt(e.target.value)} required />
                 </Form.Group>
               </Col>
             </Row>
@@ -298,12 +257,7 @@ const GreyPurchase = () => {
               <Col md={6}>
                 <Form.Group controlId="sentTo">
                   <Form.Label>Sent To</Form.Label>
-                  <Form.Control 
-                    as="select" 
-                    value={sentTo} 
-                    onChange={(e) => setSentTo(e.target.value)} 
-                    required
-                  >
+                  <Form.Control as="select" value={sentTo} onChange={(e) => setSentTo(e.target.value)} required>
                     <option value="">Choose...</option>
                     {sentToList.map((party, index) => (
                       <option key={index} value={party}>{party}</option>
@@ -313,9 +267,7 @@ const GreyPurchase = () => {
               </Col>
             </Row>
 
-            <Button variant="primary" type="submit">
-              Submit
-            </Button>
+            <Button variant="primary" type="submit">Submit</Button>
           </Form>
         </>
       )}
