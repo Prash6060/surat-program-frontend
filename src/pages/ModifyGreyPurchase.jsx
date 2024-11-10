@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const ModifyGreyPurchase = () => {
   const [challan, setChallan] = useState('');
@@ -12,7 +12,7 @@ const ModifyGreyPurchase = () => {
   const [partyNameOptions] = useState(['ASHISH FABS', 'RPRASHIL KUMAR']);
   const [qualityOptions, setQualityOptions] = useState([]);
   const [sentToOptions, setSentToOptions] = useState([]);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDropdownData();
@@ -48,7 +48,14 @@ const ModifyGreyPurchase = () => {
         throw new Error('Failed to fetch data. Please check the challan number.');
       }
       const data = await response.json();
-      setGreyPurchase(data.data);
+
+      // Check if canBeModified is false
+      if (data.data.canBeModified === false) {
+        setError('The associated challan already has a dye inward entry and cannot be modified.');
+        setGreyPurchase(null); // Clear any previous data
+      } else {
+        setGreyPurchase(data.data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -60,9 +67,6 @@ const ModifyGreyPurchase = () => {
     setLoading(true);
     setError('');
     setSuccess('');
-  
-    console.log("Data to be modified:", greyPurchase); // Debug log to verify data
-  
     try {
       const response = await fetch(`http://localhost:3000/api/auth/modify-grey-purchase/${greyPurchase._id}`, {
         method: 'PUT',
@@ -76,7 +80,7 @@ const ModifyGreyPurchase = () => {
       }
       setSuccess('Grey purchase data successfully modified!');
       setTimeout(() => {
-        navigate('/'); // Navigate to home after 1 second
+        navigate('/');
       }, 1000);
     } catch (err) {
       setError(err.message);
@@ -84,7 +88,6 @@ const ModifyGreyPurchase = () => {
       setLoading(false);
     }
   };
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,13 +96,11 @@ const ModifyGreyPurchase = () => {
       [name]: name === "grey_total_roll" ? parseInt(value, 10) : value,
     });
   };
-  
-  
 
   return (
     <Container className="mt-5">
       <h1 className="text-center mb-4">Modify Grey Purchase</h1>
-      
+
       <Form>
         <Row className="justify-content-center">
           <Col xs={12} sm={8} md={6} lg={4}>

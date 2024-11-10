@@ -10,8 +10,9 @@ const DyeInward = () => {
   const [error, setError] = useState('');
   const [alert, setAlert] = useState('');
   const [selectedDyeFrom, setSelectedDyeFrom] = useState('');
-  const [availableRoll, setAvailableRoll] = useState(0); // To hold available roll for selected quality
+  const [availableRolls, setAvailableRolls] = useState({}); // To hold available rolls per quality
   const [clickedRollIndex, setClickedRollIndex] = useState(null); // To track clicked roll index for showing available rolls
+  const [receiveDate, setReceiveDate] = useState(new Date().toISOString().split('T')[0]); // Set default to today's date
   const navigate = useNavigate(); // Initialize navigate hook
 
   useEffect(() => {
@@ -77,7 +78,10 @@ const DyeInward = () => {
       const selectedQuality = filteredQualities.find(q => q.display === value.toUpperCase());
       if (selectedQuality) {
         updatedEntries[index]['challan'] = selectedQuality.challan; // Set challan value separately
-        setAvailableRoll(selectedQuality.total_roll); // Update available rolls based on selected quality
+        setAvailableRolls(prevState => ({
+          ...prevState,
+          [value.toUpperCase()]: selectedQuality.total_roll, // Update available rolls for this quality
+        }));
       }
     }
 
@@ -89,8 +93,8 @@ const DyeInward = () => {
 
     if (field === 'roll') {
       const enteredRoll = value || 0;
-      if (enteredRoll > availableRoll) {
-        setAlert(`Roll count exceeds available stock of ${availableRoll} for ${updatedEntries[index].quality}`);
+      if (enteredRoll > (availableRolls[updatedEntries[index].quality] || 0)) {
+        setAlert(`Roll count exceeds available stock of ${(availableRolls[updatedEntries[index].quality] || 0)} for ${updatedEntries[index].quality}`);
         updatedEntries[index]['roll'] = '';
       } else {
         setAlert('');
@@ -134,7 +138,7 @@ const DyeInward = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ dye_from, grey_details }),
+        body: JSON.stringify({ dye_from, grey_details, receive_date: receiveDate }), // Include receive date in request
       });
 
       const data = await response.json();
@@ -171,9 +175,24 @@ const DyeInward = () => {
         </Form.Control>
       </Form.Group>
 
-      <Button variant="primary" onClick={handleAddEntry} className="mb-3 ms-2">
-        Add Entry
-      </Button>
+      {/* Container for both buttons in the same row */}
+      <div className="d-flex justify-content-between mb-3">
+        {/* Add Entry button on the left */}
+        <Button variant="primary" onClick={handleAddEntry}>
+          Add Entry
+        </Button>
+
+        {/* Date of Receive on the right */}
+        <Form.Group controlId="receiveDate" className="mb-0" style={{ width: 'auto' }}>
+          <Form.Label className="sr-only">Date of Receive</Form.Label>
+          <Form.Control
+            type="date"
+            value={receiveDate}
+            onChange={(e) => setReceiveDate(e.target.value)}
+            style={{ width: '130px' }} // Set width for the date field
+          />
+        </Form.Group>
+      </div>
 
       <Table striped bordered hover responsive>
         <thead>
@@ -207,33 +226,57 @@ const DyeInward = () => {
                 </Form.Control>
               </td>
               <td>
-                <Form.Control type="text" value={entry.challan} readOnly />
+                <Form.Control
+                  type="text"
+                  value={entry.challan}
+                  readOnly
+                />
               </td>
               <td>
-                <Form.Control type="text" value={entry.lotNo} onChange={(e) => handleChange(index, 'lotNo', e.target.value)} />
+                <Form.Control
+                  type="text"
+                  value={entry.lotNo}
+                  onChange={(e) => handleChange(index, 'lotNo', e.target.value)}
+                />
               </td>
               <td>
                 <Form.Control
                   type="number"
                   value={entry.roll}
-                  onClick={() => handleRollClick(index)} // Track when user clicks on roll input
+                  onClick={() => handleRollClick(index)} // Handle roll input click
                   onChange={(e) => handleChange(index, 'roll', e.target.value)}
                 />
-                {clickedRollIndex === index && availableRoll > 0 && (
-                  <div className="text-muted mt-1"> Avail: {availableRoll}</div>
+                {clickedRollIndex === index && availableRolls[entry.quality] !== undefined && (
+                  <div className="mt-2">Avail: {availableRolls[entry.quality]}</div>
                 )}
               </td>
               <td>
-                <Form.Control type="number" value={entry.greyMtr} onChange={(e) => handleChange(index, 'greyMtr', e.target.value)} />
+                <Form.Control
+                  type="number"
+                  value={entry.greyMtr}
+                  onChange={(e) => handleChange(index, 'greyMtr', e.target.value)}
+                />
               </td>
               <td>
-                <Form.Control type="number" value={entry.fnsMtr} onChange={(e) => handleChange(index, 'fnsMtr', e.target.value)} />
+                <Form.Control
+                  type="number"
+                  value={entry.fnsMtr}
+                  onChange={(e) => handleChange(index, 'fnsMtr', e.target.value)}
+                />
               </td>
               <td>
-                <Form.Control type="number" value={entry.ratePerMtr} onChange={(e) => handleChange(index, 'ratePerMtr', e.target.value)} />
+                <Form.Control
+                  type="number"
+                  value={entry.ratePerMtr}
+                  onChange={(e) => handleChange(index, 'ratePerMtr', e.target.value)}
+                />
               </td>
               <td>
-                <Form.Control type="number" value={entry.amt} readOnly />
+                <Form.Control
+                  type="number"
+                  value={entry.amt}
+                  readOnly
+                />
               </td>
               <td>
                 <Button variant="danger" onClick={() => handleDeleteEntry(index)}>
@@ -245,9 +288,7 @@ const DyeInward = () => {
         </tbody>
       </Table>
 
-      <Button variant="primary" onClick={handleSubmit}>
-        Submit
-      </Button>
+      <Button variant="success" onClick={handleSubmit}>Submit</Button>
     </Container>
   );
 };
