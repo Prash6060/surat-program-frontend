@@ -59,6 +59,28 @@ const CustomNavbar = () => {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
+            
+            {/* Modifications dropdown */}
+            <Dropdown>
+              <Dropdown.Toggle variant="light" id="dropdown-modifications" disabled={!isLoggedIn}>
+                Modifications
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item as={NavLink} to="/modify-grey-purchase" disabled={!isLoggedIn}>
+                  Modify Grey Purchase
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/modify-dye-inward" disabled={!isLoggedIn}>
+                  Modify Dye Inward
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/delete-grey-purchase" disabled={!isLoggedIn}>
+                  Delete Grey Purchase
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/delete-dye-inward" disabled={!isLoggedIn}>
+                  Delete Dye Inward
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+
           </Nav>
           <Nav className="ms-auto">
             {isLoggedIn ? (

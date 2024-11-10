@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useAuth } from '../store/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const GreyPurchase = () => {
   const { isLoggedIn } = useAuth(); // Check authentication
@@ -16,9 +17,10 @@ const GreyPurchase = () => {
   const [sentTo, setSentTo] = useState('');
   const [partyList, setPartyList] = useState([]);
   const [sentToList, setSentToList] = useState([]);
-  const [purchaseQualities, setPurchaseQualities] = useState([]); // Store fetched purchase qualities
+  const [purchaseQualities, setPurchaseQualities] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchParties = async () => {
@@ -54,7 +56,7 @@ const GreyPurchase = () => {
         const response = await fetch('http://localhost:3000/api/auth/view-quality');
         const data = await response.json();
         if (response.ok) {
-          setPurchaseQualities(data.qualities); // Store the fetched qualities
+          setPurchaseQualities(data.qualities);
         } else {
           setError(data.msg || 'Failed to fetch purchase qualities');
         }
@@ -65,8 +67,7 @@ const GreyPurchase = () => {
 
     fetchParties();
     fetchSentToParties();
-    fetchPurchaseQualities(); // Fetch purchase qualities
-
+    fetchPurchaseQualities();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -96,7 +97,11 @@ const GreyPurchase = () => {
       if (response.ok) {
         setSuccessMessage('Grey purchase recorded successfully!');
         await addGreyStock(); // Update grey stock
-        resetForm(); // Clear form
+
+        // After 1 second, navigate to the home page
+        setTimeout(() => {
+          navigate('/');
+        }, 1000); // 1000 milliseconds = 1 second
       } else {
         const errorData = await response.json();
         setError(errorData.msg || 'Failed to add grey purchase');
@@ -114,7 +119,7 @@ const GreyPurchase = () => {
       grey_purchase_challan: challanNo,
       grey_purchase_date: dateOfPurchase,
       grey_purchase_from: purchasedFrom,
-      grey_sent_to: sentTo, // Include sentTo field
+      grey_sent_to: sentTo,
       status: "DYING", // Default status set to "DYING"
     };
 
@@ -137,21 +142,6 @@ const GreyPurchase = () => {
     } catch (error) {
       console.error('Error adding grey stock:', error);
     }
-  };
-
-  const resetForm = () => {
-    setPurchasedFrom('');
-    setDateOfPurchase('');
-    setChallanNo('');
-    setBillNo('');
-    setPartyName('');
-    setPurchaseQuality('');
-    setTotalRoll('');
-    setTotalNetWtg('');
-    setTotalBillAmt('');
-    setSentTo('');
-    setError('');
-    setSuccessMessage('');
   };
 
   const toUpperCase = (value) => value.toUpperCase();
@@ -231,29 +221,29 @@ const GreyPurchase = () => {
             </Row>
 
             <Row className="mb-3">
-              <Col md={4}>
+              <Col md={6}>
                 <Form.Group controlId="totalRoll">
                   <Form.Label>Total Roll</Form.Label>
-                  <Form.Control type="number" value={totalRoll} onChange={(e) => setTotalRoll(e.target.value)} required />
+                  <Form.Control type="number" placeholder="Enter total roll" value={totalRoll} onChange={(e) => setTotalRoll(e.target.value)} required />
                 </Form.Group>
               </Col>
 
-              <Col md={4}>
+              <Col md={6}>
                 <Form.Group controlId="totalNetWtg">
-                  <Form.Label>Total Net Wtg</Form.Label>
-                  <Form.Control type="number" value={totalNetWtg} onChange={(e) => setTotalNetWtg(e.target.value)} required />
-                </Form.Group>
-              </Col>
-
-              <Col md={4}>
-                <Form.Group controlId="totalBillAmt">
-                  <Form.Label>Total Bill Amt</Form.Label>
-                  <Form.Control type="number" value={totalBillAmt} onChange={(e) => setTotalBillAmt(e.target.value)} required />
+                  <Form.Label>Total Net Weight</Form.Label>
+                  <Form.Control type="number" placeholder="Enter total net weight" value={totalNetWtg} onChange={(e) => setTotalNetWtg(e.target.value)} required />
                 </Form.Group>
               </Col>
             </Row>
 
             <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group controlId="totalBillAmt">
+                  <Form.Label>Total Bill Amount</Form.Label>
+                  <Form.Control type="number" placeholder="Enter total bill amount" value={totalBillAmt} onChange={(e) => setTotalBillAmt(e.target.value)} required />
+                </Form.Group>
+              </Col>
+
               <Col md={6}>
                 <Form.Group controlId="sentTo">
                   <Form.Label>Sent To</Form.Label>
@@ -267,7 +257,9 @@ const GreyPurchase = () => {
               </Col>
             </Row>
 
-            <Button variant="primary" type="submit">Submit</Button>
+            <Button type="submit" variant="primary" className="w-100">
+              Submit Purchase
+            </Button>
           </Form>
         </>
       )}
@@ -276,3 +268,4 @@ const GreyPurchase = () => {
 };
 
 export default GreyPurchase;
+  

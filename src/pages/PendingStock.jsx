@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button, Form, Row, Col } from 'react-bootstrap';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';  // Import jsPDF autotable plugin
 
 const PendingStock = () => {
     const [pendingStocks, setPendingStocks] = useState([]);
@@ -95,7 +97,7 @@ const PendingStock = () => {
         setFilteredStocks(filtered);
     };
 
-    const handleExport = () => {
+    const handleExportExcel = () => {
         const dataToExport = filteredStocks.map(stock => ({
             "Grey Quality": stock.grey_purchase_quality,
             "Total Roll": stock.grey_purchase_total_roll,
@@ -113,6 +115,34 @@ const PendingStock = () => {
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(blob, 'PendingStock.xlsx');
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Pending Stock Entries", 14, 20);
+
+        const tableColumn = ["Sr. No", "Grey Quality", "Total Roll", "Bill No", "Challan No", "Grey Purchase Date", "Grey Purchase Firm", "Dye Firm", "Status"];
+        const tableRows = filteredStocks.map((stock, index) => [
+            index + 1,
+            stock.grey_purchase_quality,
+            stock.grey_purchase_total_roll,
+            stock.grey_purchase_billno,
+            stock.grey_purchase_challan,
+            new Date(stock.grey_purchase_date).toLocaleDateString(),
+            stock.grey_purchase_from,
+            stock.grey_sent_to,
+            stock.status,
+        ]);
+
+        // Generate table in PDF using autoTable
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 30,
+        });
+
+        doc.save('PendingStock.pdf');
     };
 
     if (loading) {
@@ -217,10 +247,12 @@ const PendingStock = () => {
                 </table>
             </div>
 
-            {/* Export Button */}
+            {/* Export Buttons */}
             <div className="text-right mt-3">
-                <Button variant="success" onClick={handleExport}>Export to Excel</Button>
+                <Button variant="success" onClick={handleExportExcel}>Export to Excel</Button>
+                <Button variant="danger" onClick={handleExportPDF}>Export to PDF</Button>
             </div>
+            
         </div>
     );
 };

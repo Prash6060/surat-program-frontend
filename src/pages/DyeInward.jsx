@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Form, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const DyeInward = () => {
   const [dyeParties, setDyeParties] = useState([]);
   const [greyQualities, setGreyQualities] = useState([]);
+  const [filteredQualities, setFilteredQualities] = useState([]);
   const [entries, setEntries] = useState([]);
   const [error, setError] = useState('');
   const [alert, setAlert] = useState('');
+  const [selectedDyeFrom, setSelectedDyeFrom] = useState('');
+  const [availableRoll, setAvailableRoll] = useState(0); // To hold available roll for selected quality
+  const [clickedRollIndex, setClickedRollIndex] = useState(null); // To track clicked roll index for showing available rolls
+  const navigate = useNavigate(); // Initialize navigate hook
 
   useEffect(() => {
     const fetchDyeParties = async () => {
       try {
         const response = await fetch('http://localhost:3000/api/auth/view-dye-parties');
         const data = await response.json();
-        
+
         if (response.ok) {
           setDyeParties(data.data);
         } else {
@@ -45,6 +51,15 @@ const DyeInward = () => {
     fetchGreyQualities();
   }, []);
 
+  const handleDyePartyChange = (e) => {
+    const selectedDyeFrom = e.target.value;
+    setSelectedDyeFrom(selectedDyeFrom);
+
+    // Filter qualities based on the selected dye party
+    const filtered = greyQualities.filter((quality) => quality.sent_to === selectedDyeFrom);
+    setFilteredQualities(filtered);
+  };
+
   const handleAddEntry = () => {
     setEntries([...entries, { quality: '', challan: '', lotNo: '', roll: '', greyMtr: '', fnsMtr: '', ratePerMtr: '', amt: '' }]);
   };
@@ -56,41 +71,43 @@ const DyeInward = () => {
 
   const handleChange = (index, field, value) => {
     const updatedEntries = [...entries];
-    updatedEntries[index][field] = value;
-  
+    updatedEntries[index][field] = value.toUpperCase(); // Force capitalization on user input
+
     if (field === 'quality') {
-      const selectedQuality = greyQualities.find(q => q.display === value);
+      const selectedQuality = filteredQualities.find(q => q.display === value.toUpperCase());
       if (selectedQuality) {
         updatedEntries[index]['challan'] = selectedQuality.challan; // Set challan value separately
+        setAvailableRoll(selectedQuality.total_roll); // Update available rolls based on selected quality
       }
     }
-  
+
     if (field === 'fnsMtr' || field === 'ratePerMtr') {
       const fnsMtr = updatedEntries[index].fnsMtr || 0;
       const ratePerMtr = updatedEntries[index].ratePerMtr || 0;
       updatedEntries[index]['amt'] = fnsMtr * ratePerMtr;
     }
-  
+
     if (field === 'roll') {
-      const selectedQuality = greyQualities.find(q => q.display === updatedEntries[index].quality);
-      if (selectedQuality) {
-        const greyStock = selectedQuality.grey_purchase_total_roll;
-        if (value > greyStock) {
-          setAlert(`Roll count exceeds available stock of ${greyStock} for ${updatedEntries[index].quality}`);
-          updatedEntries[index]['roll'] = '';
-        } else {
-          setAlert('');
-        }
+      const enteredRoll = value || 0;
+      if (enteredRoll > availableRoll) {
+        setAlert(`Roll count exceeds available stock of ${availableRoll} for ${updatedEntries[index].quality}`);
+        updatedEntries[index]['roll'] = '';
+      } else {
+        setAlert('');
       }
     }
-  
+
     setEntries(updatedEntries);
   };
-  
+
+  const handleRollClick = (index) => {
+    // When user clicks on the roll input, set the clicked index to display available roll
+    setClickedRollIndex(index);
+  };
+
   const handleSubmit = async () => {
-    const dyePartySelect = document.getElementById('dyePartySelect');
-    const dye_from = dyePartySelect.value;
-  
+    const dye_from = selectedDyeFrom;
+
     const grey_details = entries.map(entry => ({
       grey_quality: entry.quality,
       grey_challan: entry.challan,
@@ -101,7 +118,7 @@ const DyeInward = () => {
       grey_rate_per_mtr: parseInt(entry.ratePerMtr, 10) || 0,
       grey_amt: parseInt(entry.amt, 10) || 0,
     }));
-  
+
     if (!dye_from) {
       setError('Please select a dye party.');
       return;
@@ -110,7 +127,7 @@ const DyeInward = () => {
       setError('Please add at least one entry.');
       return;
     }
-  
+
     try {
       const response = await fetch('http://localhost:3000/api/auth/add-dye-inward', {
         method: 'POST',
@@ -119,12 +136,16 @@ const DyeInward = () => {
         },
         body: JSON.stringify({ dye_from, grey_details }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         setAlert('Dye inward entry created successfully!');
         setEntries([]);
+        // Navigate to home page after 1 second delay
+        setTimeout(() => {
+          navigate('/'); // Navigate to home page
+        }, 1000);
       } else {
         setError(data.msg || 'Failed to create dye inward entry.');
       }
@@ -133,17 +154,16 @@ const DyeInward = () => {
       setError('Failed to create dye inward entry. Please try again later.');
     }
   };
-  
 
   return (
     <Container className="mt-5">
       <h2 className="text-center">Dye Inward</h2>
       {error && <Alert variant="danger">{error}</Alert>}
-      {alert && <Alert variant="warning">{alert}</Alert>}
+      {alert && <Alert variant="success">{alert}</Alert>}
 
-      <Form.Group controlId="dyePartySelect">
+      <Form.Group controlId="dyePartySelect" className="mb-3">
         <Form.Label>Inward From</Form.Label>
-        <Form.Control as="select">
+        <Form.Control as="select" onChange={handleDyePartyChange}>
           <option value="">Select Dye Party</option>
           {dyeParties.map((party, index) => (
             <option key={index} value={party}>{party}</option>
@@ -151,7 +171,7 @@ const DyeInward = () => {
         </Form.Control>
       </Form.Group>
 
-      <Button variant="primary" onClick={handleAddEntry} className="mb-3">
+      <Button variant="primary" onClick={handleAddEntry} className="mb-3 ms-2">
         Add Entry
       </Button>
 
@@ -179,7 +199,7 @@ const DyeInward = () => {
                   onChange={(e) => handleChange(index, 'quality', e.target.value)}
                 >
                   <option value="">Select Quality</option>
-                  {greyQualities.map((quality, i) => (
+                  {filteredQualities.map((quality, i) => (
                     <option key={i} value={quality.display}>
                       {quality.display}
                     </option>
@@ -193,7 +213,15 @@ const DyeInward = () => {
                 <Form.Control type="text" value={entry.lotNo} onChange={(e) => handleChange(index, 'lotNo', e.target.value)} />
               </td>
               <td>
-                <Form.Control type="number" value={entry.roll} onChange={(e) => handleChange(index, 'roll', e.target.value)} />
+                <Form.Control
+                  type="number"
+                  value={entry.roll}
+                  onClick={() => handleRollClick(index)} // Track when user clicks on roll input
+                  onChange={(e) => handleChange(index, 'roll', e.target.value)}
+                />
+                {clickedRollIndex === index && availableRoll > 0 && (
+                  <div className="text-muted mt-1"> Avail: {availableRoll}</div>
+                )}
               </td>
               <td>
                 <Form.Control type="number" value={entry.greyMtr} onChange={(e) => handleChange(index, 'greyMtr', e.target.value)} />
@@ -208,14 +236,16 @@ const DyeInward = () => {
                 <Form.Control type="number" value={entry.amt} readOnly />
               </td>
               <td>
-                <Button variant="danger" onClick={() => handleDeleteEntry(index)}>Delete</Button>
+                <Button variant="danger" onClick={() => handleDeleteEntry(index)}>
+                  Delete
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
 
-      <Button variant="success" onClick={handleSubmit} className="mt-3">
+      <Button variant="primary" onClick={handleSubmit}>
         Submit
       </Button>
     </Container>

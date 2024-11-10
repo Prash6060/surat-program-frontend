@@ -13,6 +13,9 @@ import GreyStock from './pages/GreyStock'; // Import new page
 import DyeInward from './pages/DyeInward';
 import TejasStock from './pages/TejasStock';
 import PendingStock from './pages/PendingStock';
+import ModifyGreyPurchase from './pages/ModifyGreyPurchase';
+import DeleteGreyPurchase from './pages/DeleteGreyPurchase';
+import Footer from './components/Footer'
 
 const App = () => {
   return (
@@ -31,8 +34,11 @@ const App = () => {
           <Route path="/dye-inward" element={<DyeInward />} /> {/* New route */}
           <Route path="/tejas-stock" element={<TejasStock />} /> {/* New route */}
           <Route path="/pending-stock" element={<PendingStock />} /> {/* New route */}
+          <Route path="/modify-grey-purchase" element={<ModifyGreyPurchase />} /> {/* New route */}
+          <Route path="/delete-grey-purchase" element={<DeleteGreyPurchase />} /> {/* New route */}
           {/* Other routes can go here */}
         </Routes>
+        {/* <Footer /> */}
       </Router> 
     </AuthProvider>
   );
