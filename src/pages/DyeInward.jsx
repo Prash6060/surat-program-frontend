@@ -138,7 +138,7 @@ const DyeInward = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ dye_from, grey_details, receive_date: receiveDate }), // Include receive date in request
+        body: JSON.stringify({ dye_from, grey_details, receive_date: receiveDate}), // Include receive date in request
       });
 
       const data = await response.json();
