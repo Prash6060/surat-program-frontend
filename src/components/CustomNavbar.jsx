@@ -20,6 +20,7 @@ const CustomNavbar = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mx-auto">
             <Nav.Link as={NavLink} to="/" exact disabled={!isLoggedIn}>Home</Nav.Link>
+            {/* Administrator Dropdown */}
             <Dropdown>
               <Dropdown.Toggle variant="light" id="dropdown-administrator" disabled={!isLoggedIn}>
                 Administrator
@@ -31,12 +32,17 @@ const CustomNavbar = () => {
                 <Dropdown.Item as={NavLink} to="/quality" disabled={!isLoggedIn}>
                   Quality
                 </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="/firm" disabled={!isLoggedIn}>
+                  Firm
+                </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
+
+            {/* Other Links */}
             <Nav.Link as={NavLink} to="/grey-purchase" disabled={!isLoggedIn}>Grey Purchase</Nav.Link>
             <Nav.Link as={NavLink} to="/dye-inward" disabled={!isLoggedIn}>Dye Inward</Nav.Link>
             
-            {/* Reports dropdown */}
+            {/* Reports Dropdown */}
             <Dropdown>
               <Dropdown.Toggle variant="light" id="dropdown-reports" disabled={!isLoggedIn}>
                 Reports
@@ -59,8 +65,8 @@ const CustomNavbar = () => {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-            
-            {/* Modifications dropdown */}
+
+            {/* Modifications Dropdown */}
             <Dropdown>
               <Dropdown.Toggle variant="light" id="dropdown-modifications" disabled={!isLoggedIn}>
                 Modifications
@@ -80,8 +86,8 @@ const CustomNavbar = () => {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-
           </Nav>
+          {/* Login/Logout Button */}
           <Nav className="ms-auto">
             {isLoggedIn ? (
               <Button variant="outline-primary" onClick={handleLogout}>Logout</Button>
@@ -96,3 +102,4 @@ const CustomNavbar = () => {
 };
 
 export default CustomNavbar;
+ 

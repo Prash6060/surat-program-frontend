@@ -25,10 +25,10 @@ const GreyPurchase = () => {
   useEffect(() => {
     const fetchParties = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/auth/view-grey-parties');
+        const response = await fetch('http://localhost:3000/api/auth/view-firm');
         const data = await response.json();
         if (response.ok) {
-          setPartyList(data.data);
+          setPartyList(data.map(firm => firm.firmName)); // Assuming firmName is the field to be displayed
         } else {
           setError(data.msg || 'Failed to fetch grey parties');
         }
@@ -199,8 +199,9 @@ const GreyPurchase = () => {
                   <Form.Label>Party Name</Form.Label>
                   <Form.Control as="select" value={partyName} onChange={(e) => setPartyName(toUpperCase(e.target.value))} required>
                     <option value="">Choose...</option>
-                    <option value="ASHISH FABS">ASHISH FABS</option>
-                    <option value="RPRASHIL KUMAR">RPRASHIL KUMAR</option>
+                    {partyList.map((party, index) => (
+                      <option key={index} value={party}>{party}</option>
+                    ))}
                   </Form.Control>
                 </Form.Group>
               </Col>
@@ -268,4 +269,3 @@ const GreyPurchase = () => {
 };
 
 export default GreyPurchase;
-  
